@@ -20,4 +20,5 @@
 
 # COMMAND ----------
 
-
+# MAGIC %md
+# MAGIC <img src="https://github.com/maxkoehlerdatabricks/production_traceability/blob/main/pictures/Complete_Process.png?raw=true" width=100%>
