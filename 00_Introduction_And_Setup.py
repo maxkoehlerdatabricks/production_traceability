@@ -1,7 +1,31 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC # Introduction
-# MAGIC blablabla bla
+# MAGIC
+# MAGIC In this example, we consider a simplified production process of a **gear shaft**.
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC <img src="https://github.com/maxkoehlerdatabricks/production_traceability/blob/main/pictures/Complete_Process.png?raw=true" width=100%>
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC
+# MAGIC **Production steps**: The source of these data is MES as well as data that is directly recorded at the station.
+# MAGIC
+# MAGIC - **Equip_Raw**: In the first step the worker picks a raw part according to the work plan. The diameter of the cylindrical shank for the gear shaft is slightly larger than that
+# MAGIC diameter of the finished part. The raw part is scanned and eqiped to the "Turning_Blank" station.
+# MAGIC - **Turning_Blank**: The cylindrical shaft is rotated. First, the rough is done by roughing material abrasion until the desired outside diameter and length of the shank is reached. This is followed by a fine machining. After processing, a quality test is carried out, which measures the surface quality with the inline measuring system resulting in a decision of OK / NOK values per part. NOK parts are not further processed. Furthermore, the turing speed of the turning machine in round per minute (rpm) is recorded.
+# MAGIC - **Mill**: The milling machine creates the characteristic surfaces for the transmission shaft. The thread is worked in and keyways are milled. This process gives the shaft its functionality and the interaction with other components is enabled.
+# MAGIC - **Assembly**: In this simplified production process this step unifies all necessary assembly steps to produce the final product.
+# MAGIC
+# MAGIC **Logistics steps**: The source of these data is SAP.
+# MAGIC
+# MAGIC - **Package**: The final product is packaged and attached with a package id.
+# MAGIC - **Shipment**: The package is shipped to the customer's warehouse.
+# MAGIC - **Delivery**: The package id is delivered to the customer's production site.
 
 # COMMAND ----------
 
@@ -38,7 +62,7 @@ print(f"We use the table in the schama '{dbName}' in the catalog '{catalogName}'
 
 # MAGIC %md
 # MAGIC ## The process graph draft
-# MAGIC From a high level, each part that is produced and shipped will traverse the following production and logistics steps
+# MAGIC From a high level, each part that is produced and shipped will traverse the following production and logistics steps. This data set reflects the production process as hsown in the picture above.
 
 # COMMAND ----------
 
@@ -88,7 +112,7 @@ display(measurement_series_turning_rpm)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC The customer reports om two issues and recalls the respective package id's
+# MAGIC The customer reports on two issues and recalls the respective package id's
 
 # COMMAND ----------
 
