@@ -34,6 +34,9 @@
 # COMMAND ----------
 
 import networkx as nx
+import pyspark.sql.functions as f
+from pyspark.sql.types import *
+from graphframes import *
 
 # COMMAND ----------
 
@@ -101,19 +104,9 @@ display(production_process_df.select("plant").distinct())
 
 # COMMAND ----------
 
-
-
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
-
+# MAGIC %md
+# MAGIC <img src="https://github.com/maxkoehlerdatabricks/production_traceability/blob/main/pictures/Use_Cases_Multiple_Plants_1.png?raw=true" width=49%>
+# MAGIC <img src="https://github.com/maxkoehlerdatabricks/production_traceability/blob/main/pictures/Use_Cases_Multiple_Plants_2.png?raw=true" width=49%>
 
 # COMMAND ----------
 
@@ -148,6 +141,60 @@ display(error_type1_df)
 
 # MAGIC %md
 # MAGIC The supplier reports on quality issies in one of their batches and provides the respective 
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## Creating the graph object
+
+# COMMAND ----------
+
+production_process_df = spark.read.table("production_process_df").drop("part_number")
+display(production_process_df)
+
+# COMMAND ----------
+
+# Create edges_df
+edge_df = (production_process_df.
+              withColumn("src", f.concat_ws('/',f.col("BC_Child"),f.col("SID_Child"), f.col("plant"))).
+              withColumn("dst", f.concat_ws('/',f.col("BC_Parent"),f.col("SID_Parent"), f.col("plant")))
+)
+
+# Create vertices_df and collect vertices metadata
+vertices_df = (
+  edge_df.select(f.col("src").alias("id"), f.col("BC_Child").alias("BC"), f.col("SID_Child").alias("SID"), f.col("plant")).
+  union(
+    edge_df.select(f.col("dst").alias("id"), f.col("BC_Parent").alias("BC"), f.col("SID_Parent").alias("SID"), f.col("plant"))
+    ).
+  distinct()
+)
+
+# COMMAND ----------
+
+display(edge_df)
+
+# COMMAND ----------
+
+display(vertices_df)
+
+# COMMAND ----------
+
+# Save edges and vertices data
+edge_df.write.mode("overwrite").saveAsTable("edge_df")
+vertices_df.write.mode("overwrite").saveAsTable("vertices_df")
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC The graph can eaisly be created fomr the edges and the vertices
+
+# COMMAND ----------
+
+g = GraphFrame(vertices_df, edge_df)
 
 # COMMAND ----------
 

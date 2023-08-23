@@ -54,63 +54,24 @@ display(error_type1_df)
 
 # COMMAND ----------
 
-production_process_df = spark.read.table("production_process_df").drop("part_number")
-display(production_process_df)
+# MAGIC %md
+# MAGIC In the first step we create the production graph
+
+# COMMAND ----------
+
+edge_df = spark.read.table("edge_df")
+vertices_df = spark.read.table("vertices_df")
+g = GraphFrame(vertices_df, edge_df)
+
+# COMMAND ----------
+
+# MAGIC %md 
+# MAGIC Our goal is to trace backwards from the customer (last node, station "At_Customer") to the station "Turning_Blank_Station".
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC <img src="https://github.com/maxkoehlerdatabricks/production_traceability/blob/main/pictures/Complete_Process.png?raw=true" width=100%>
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC We will use the production process graph to trace backwards on barcode level from the package id at the customer location to the barcodes at the Turning_Blank_Station.
-
-# COMMAND ----------
-
-production_process_df = spark.read.table("production_process_df").drop("part_number")
-display(production_process_df)
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC # Creating the production graph
-
-# COMMAND ----------
-
-# Create edges_df
-edge_df = (production_process_df.
-              withColumn("src", f.concat_ws('/',f.col("BC_Child"),f.col("SID_Child"), f.col("plant"))).
-              withColumn("dst", f.concat_ws('/',f.col("BC_Parent"),f.col("SID_Parent"), f.col("plant")))
-)
-
-# Create vertices_df and collect vertices metadata
-vertices_df = (
-  edge_df.select(f.col("src").alias("id"), f.col("BC_Child").alias("BC"), f.col("SID_Child").alias("SID"), f.col("plant")).
-  union(
-    edge_df.select(f.col("dst").alias("id"), f.col("BC_Parent").alias("BC"), f.col("SID_Parent").alias("SID"), f.col("plant"))
-    ).
-  distinct()
-)
-
-
-# COMMAND ----------
-
-display(edge_df)
-
-# COMMAND ----------
-
-display(vertices_df)
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC From the vertices and the edges data frames we can now define the graph
-
-# COMMAND ----------
-
-g = GraphFrame(vertices_df, edge_df)
 
 # COMMAND ----------
 
@@ -124,7 +85,7 @@ start_search_nodes = (production_process_df.
                         select("plant").
                         distinct().
                         crossJoin(error_type1_df).
-                        withColumn("SID", f.lit("Packaging_Logistics")).
+                        withColumn("SID", f.lit("At_Customer")).
                         withColumn("id", f.concat_ws('/',f.col("package_id"),f.col("SID"), f.col("plant"))).
                         join(g.vertices, "id").
                         select("id")
@@ -134,11 +95,7 @@ display(start_search_nodes)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC Using Breadth First Search, we can for example find the path from the related node with the SID
-# MAGIC
-# MAGIC
-# MAGIC
-# MAGIC   for the pathes from the first search node in the above list to the node with the SID 'Packaging_Logistics'
+# MAGIC Using Breadth First Search, we can for ian example path to go from "At_Customer" to "Turning_Blank_Station". 
 
 # COMMAND ----------
 
@@ -146,17 +103,13 @@ display(start_search_nodes)
 example_path = g.bfs(
   fromExpr = "id = '" + start_search_nodes.collect()[0][0] + "'",
   toExpr = "SID = 'Turning_Blank_Station'",
-  maxPathLength = 5)
+  maxPathLength = 10)
 display(example_path)
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC Since the production process of all parts has the same structure, this example provides the search architecture for a Motif search
-
-# COMMAND ----------
-
-
 
 # COMMAND ----------
 
