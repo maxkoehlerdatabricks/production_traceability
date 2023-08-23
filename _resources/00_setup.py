@@ -59,11 +59,6 @@ def generate_data():
 
 if reset_all_bool:
   generate_data()
-else:
-  try:
-    dbutils.fs.ls(path)
-  except: 
-    generate_data()
 
 # COMMAND ----------
 

@@ -88,11 +88,32 @@ display(production_process_df)
 # COMMAND ----------
 
 # MAGIC %md
+# MAGIC ## The problem with use cases within and across multiple plants 
+
+# COMMAND ----------
+
+# MAGIC %md
 # MAGIC We can easily see that the data belongs to multiple plants
 
 # COMMAND ----------
 
 display(production_process_df.select("plant").distinct())
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+
+
+# COMMAND ----------
+
+
 
 # COMMAND ----------
 
