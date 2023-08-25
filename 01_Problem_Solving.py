@@ -6,11 +6,12 @@
 
 # MAGIC %md
 # MAGIC
-# MAGIC **Goal**: Trace back from a bunch of erroneous package id’s to test data in production
+# MAGIC **Goal**: Trace back from a bunch of erroneous end products to test data in production
 # MAGIC
 # MAGIC **Situation**:
 # MAGIC - Products were produced by the manufacturer and then shipped to the customer
-# MAGIC - The customer observed that a significant amount of products is out of the specifications and recalls a complete time range
+# MAGIC - The customer observed that the diameter of the end product is slightly too large and further assembly is at risk
+# MAGIC - As a significant amount of products is affected, the customer recalls a complete time range
 # MAGIC - The manufacturer wants to 
 # MAGIC     - Explain the issue with the production data, 
 # MAGIC     - Predict the occurrence of the issue to reduce the number of products of the complete time range to a couple of products, i.e. identify the broken parts on barcode level.
@@ -19,6 +20,10 @@
 # MAGIC
 # MAGIC **Prerequisites**: Run the notebook *00_Introduction_And_Setup*
 # MAGIC
+
+# COMMAND ----------
+
+
 
 # COMMAND ----------
 
@@ -46,7 +51,7 @@ display(error_type1_df)
 # MAGIC - We would like to analyze the data measured at the station "Turning_Blank". However
 # MAGIC   - From the package id we do not know which plant the product comes from
 # MAGIC   - We do not know the barcodes of the product at the station "Turning_Blank"
-# MAGIC   - The measuremnt data is just an "endless" time seires and we do not know at what part of the time seires to consider for which barcode
+# MAGIC   - The measuremnt data is just an "endless" time seires and we do not know what part of the time seires to consider for which barcode
 # MAGIC - If our analyses reveils a deficiency in production that completely explains the issue, we can
 # MAGIC   - Gain trust bei explaining the issue to the customer
 # MAGIC   - Identify the effected barcodes
@@ -80,6 +85,7 @@ g = GraphFrame(vertices_df, edge_df)
 
 # COMMAND ----------
 
+production_process_df = spark.read.table("production_process_df").drop("part_number")
 error_type1_df = spark.read.table("error_type1_df")
 start_search_nodes = (production_process_df.
                         select("plant").
@@ -137,16 +143,71 @@ display(chain)
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC Now, we can select the information of interest
+
+# COMMAND ----------
+
+traceability = (chain.
+                withColumn("plant", f.col("to.plant")).
+                withColumn("ID_at_Customer", f.col("to.BC")).
+                withColumn("ID_at_Turning_Blank_Station", f.col("from.BC")).
+                withColumn("Start_Turning_Blank", f.col("e0.Start_Time")).
+                withColumn("End_Turning_Blank", f.col("e0.End_Time")).
+                select("plant", "ID_at_Customer", "ID_at_Turning_Blank_Station", "Start_Turning_Blank", "End_Turning_Blank")
+               )
+display(traceability)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC This puts us in the position to indentfy the parts of the "endless" time series at which the problematic parts were produced. 
+
+# COMMAND ----------
+
+measurement_series_turning_rpm = spark.read.table("measurement_series_turning_rpm")
+display(measurement_series_turning_rpm)
 
 
 # COMMAND ----------
 
+suspicious_series = (traceability.
+                     join(measurement_series_turning_rpm, (traceability.plant == measurement_series_turning_rpm.plant) & (traceability.Start_Turning_Blank <= measurement_series_turning_rpm.time) & (traceability.End_Turning_Blank >= measurement_series_turning_rpm.time)).
+                     select(traceability.plant, traceability.ID_at_Customer, traceability.ID_at_Turning_Blank_Station, measurement_series_turning_rpm.time, measurement_series_turning_rpm.rpm)
+                     )
 
+display(suspicious_series)
 
 # COMMAND ----------
 
-
+# MAGIC %md
+# MAGIC If we look at on of those series we see that the plateau of this measuremnet series is slightly below the specification of 18k round per minute
 
 # COMMAND ----------
 
+filter_part = suspicious_series.select(f.col("ID_at_Customer")).collect()[0][0]
+sample_suspicious_part = suspicious_series.filter(f.col("ID_at_Customer") == filter_part)
+display(sample_suspicious_part)
 
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC This seems to hold true for all parts that were recalled
+
+# COMMAND ----------
+
+display(suspicious_series.groupBy("ID_at_Customer").agg(f.max("rpm")))
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC When looking at all parts, we see that the max is somewhere just above the specification
+
+# COMMAND ----------
+
+display(measurement_series_turning_rpm.groupBy("part_number").agg(f.max("rpm")))
+
+# COMMAND ----------
+
+# MAGIC  %md
+# MAGIC  After conducting a physical simulation we can now prove that the slightly increased diameter of the end product is due to a slightly too slow turning process. We can identify all problematic parts that are shipped to the customer and explain the issue to the customer. This significantly reduces the number of affected products by the recall. Furthermore, implementing a preventive action is straightforward, since we only need to adapt respective thresholds in the inline measurement system.
