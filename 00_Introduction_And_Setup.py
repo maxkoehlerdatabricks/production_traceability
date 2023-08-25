@@ -135,7 +135,8 @@ display(error_type1_df)
 
 # COMMAND ----------
 
-
+error_type2_df = spark.read.table("error_type2_df")
+display(error_type2_df)
 
 # COMMAND ----------
 
@@ -144,7 +145,8 @@ display(error_type1_df)
 
 # COMMAND ----------
 
-
+supplier_batch_df = spark.read.table("supplier_batch_df")
+display(supplier_batch_df)
 
 # COMMAND ----------
 

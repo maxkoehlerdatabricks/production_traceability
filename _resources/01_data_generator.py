@@ -31,6 +31,7 @@ number_of_parts_produced = 100
 distributed_on_plants = 2
 production_steps = ["Direct_Assembly","Equip_Raw","Mill","Turning_Blank"]
 n_parts_with_error_1 = 10
+n_supplier_batches = 3
 
 # COMMAND ----------
 
@@ -260,7 +261,7 @@ production_process_df.write.mode("overwrite").saveAsTable("production_process_df
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC # Simulate the test data
+# MAGIC # Simulate the measurement data
 
 # COMMAND ----------
 
@@ -380,6 +381,71 @@ display(error_type1_df)
 
 # Save the data
 error_type1_df.write.mode("overwrite").saveAsTable("error_type1_df")
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC # Simulate the measurement data
+
+# COMMAND ----------
+
+display(production_process_df)
+
+# COMMAND ----------
+
+w = Window().partitionBy("plant").orderBy("part_number")
+
+supplier_batch_df = (production_process_df.
+        filter((f.col("SID_Parent") == "At_raw")).
+        withColumn("part_number_per_plant", f.row_number().over(w)).
+        select("BC_Parent", "Start_Time", "plant", "part_number_per_plant")
+
+)
+
+
+tmp = (supplier_batch_df.
+        groupBy("plant").agg( f.max("part_number_per_plant").alias("total_parts_per_plant") ).
+        withColumn( "break_batch_after", f.ceil( f.col("total_parts_per_plant") / f.lit(n_supplier_batches)))
+)
+
+
+supplier_batch_df  = (supplier_batch_df.
+                      join(tmp, "plant", "left" ).
+                      withColumn("supplier_batch",   f.ceil(f.col("part_number_per_plant") / f.col("break_batch_after"))).
+                      select("plant", f.col("BC_parent").alias("id"), "supplier_batch")
+)
+
+display(supplier_batch_df)
+
+
+# COMMAND ----------
+
+# Save the data
+supplier_batch_df.write.mode("overwrite").saveAsTable("supplier_batch_df")
+
+# COMMAND ----------
+
+# Get a couple of problematic BC's at the customer to trace nach to supplier
+error_type2_df = (
+  supplier_batch_df.
+  filter( (f.col("supplier_batch") == 1) & (f.col("plant") == 1)). # filter a specific batch in a plant
+  withColumnRenamed("id", "BC_Parent"). # prepare for join
+  withColumn("SID_Parent", f.lit("At_raw")). # preprae for join
+  select("plant", "BC_Parent", "SID_Parent"). # prepare for join
+  join(production_process_df , ["plant", "BC_Parent", "SID_Parent"], how= "inner"). # filtering join to get the part_numbers
+  select("part_number", "plant"). # pepare for join
+  join(production_process_df , ["part_number", "plant"], how= "inner").# filtering join to subset the part numbers
+  filter(f.col("SID_Child") == "At_Customer"). # Get the respective barcodes at the customer
+  select(f.col("BC_parent").alias("package_id")).
+  distinct()
+)
+
+display(error_type2_df)
+
+# COMMAND ----------
+
+# Save the data
+error_type2_df.write.mode("overwrite").saveAsTable("error_type2_df")
 
 # COMMAND ----------
 
