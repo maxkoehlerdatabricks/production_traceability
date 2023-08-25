@@ -23,7 +23,8 @@
 
 # COMMAND ----------
 
-
+# MAGIC %md
+# MAGIC <img src="https://github.com/maxkoehlerdatabricks/production_traceability/blob/main/pictures/Supplier_Manufacturer_Customer.png?raw=true" width=100%>
 
 # COMMAND ----------
 
