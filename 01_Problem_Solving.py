@@ -37,9 +37,74 @@
 
 # COMMAND ----------
 
+import networkx as nx
+
 import pyspark.sql.functions as f
 from pyspark.sql.types import *
 from graphframes import *
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## What we will do from a Graph perspective
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC Say we have a simple graph
+
+# COMMAND ----------
+
+vertices_example_df = sqlContext.createDataFrame([
+  ("A","some_metadata"),
+  ("B", "some_metadata"),
+  ("C", "some_metadata")
+  ], ["id", "Vertices_Data"])
+
+display(vertices_example_df)
+
+# COMMAND ----------
+
+edges_example_df = sqlContext.createDataFrame([
+  ("A", "B", "some_metadata"),
+  ("B", "C", "some_metadata")
+  ], ["src", "dst", "Edge_Data"])
+
+display(edges_example_df)
+
+# COMMAND ----------
+
+gnx_example = nx.from_pandas_edgelist(edges_example_df.toPandas(), source='src', target='dst', create_using=nx.DiGraph())
+nx.draw_spring(gnx_example, with_labels= True, font_size = 7, font_color = "red", node_color = "lightgrey")
+
+# COMMAND ----------
+
+g_example = GraphFrame(vertices_example_df, edges_example_df)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC Say, we want to trace back from C to B. One way to do this is to apply motif finding to traverse the graph, see https://graphframes.github.io/graphframes/docs/_site/user-guide.html#motif-finding
+
+# COMMAND ----------
+
+chain_example = g_example.find("(from)-[e]->(to)").filter("to.id in ('C')")
+display(chain_example)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC The rest of the solution is about subsetting from this dataframe
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC If we do not know the graph structure in advance, we can apply the Breadth-first search algorithm on a couple of nodes to learn it form the data, see https://graphframes.github.io/graphframes/docs/_site/user-guide.html#breadth-first-search-bfs
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## Back to the production graph example
 
 # COMMAND ----------
 
@@ -52,7 +117,7 @@ display(error_type1_df)
 # MAGIC - We would like to analyze the data measured at the station "Turning_Blank". However
 # MAGIC   - From the package id we do not know which plant the product comes from
 # MAGIC   - We do not know the barcodes of the product at the station "Turning_Blank"
-# MAGIC   - The measuremnt data is just an "endless" time series and we do not know what part of the time seires to consider for which barcode
+# MAGIC   - The measuremnt data is just an "endless" time series and we do not know what part of the time series to consider for which barcode
 # MAGIC - If our analyses reveils a deficiency in production that completely explains the issue, we can
 # MAGIC   - Gain trust bei explaining the issue to the customer
 # MAGIC   - Identify the effected barcodes
@@ -72,7 +137,7 @@ g = GraphFrame(vertices_df, edge_df)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC It will be confortable in this notebook to create the reverted graph as well
+# MAGIC It will be comfortable in this notebook to create the reverted graph as well
 
 # COMMAND ----------
 
@@ -134,15 +199,6 @@ cols
 
 # COMMAND ----------
 
-# MAGIC %md
-# MAGIC cols = example_path.columns
-# MAGIC cols[0] = "from"
-# MAGIC cols[-1] = "to"
-# MAGIC cols.reverse()
-# MAGIC cols
-
-# COMMAND ----------
-
 path_structure_lst = ["(" + cols[i:(i+3)][0] + ")-[" + cols[i:(i+3)][1] + "]->(" + cols[i:(i+3)][2] + ")" for i in range(0, (len(cols) - 2), 2)]
 motif_search_expression = ";".join(path_structure_lst)
 motif_search_expression
@@ -181,7 +237,7 @@ display(traceability)
 
 # COMMAND ----------
 
-measurement_series_turning_rpm = spark.read.table("measurement_series_turning_rpm")
+measurement_series_turning_rpm = spark.read.table("measurement_series_turning_rpm").drop("part_number")
 display(measurement_series_turning_rpm)
 
 

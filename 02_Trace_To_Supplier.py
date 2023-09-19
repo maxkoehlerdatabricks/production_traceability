@@ -75,6 +75,11 @@ g_example = GraphFrame(vertices_example_df, edges_example_df)
 
 # COMMAND ----------
 
+gnx_example = nx.from_pandas_edgelist(edges_example_df.toPandas(), source='src', target='dst', create_using=nx.DiGraph())
+nx.draw_spring(gnx_example, with_labels= True, font_size = 7, font_color = "red", node_color = "lightgrey")
+
+# COMMAND ----------
+
 # MAGIC %md 
 # MAGIC From this graph it is easy to see that it can be decomposed in two weakly connected subgraphs
 
@@ -83,11 +88,6 @@ g_example = GraphFrame(vertices_example_df, edges_example_df)
 sc.setCheckpointDir("dbfs:/dbfs/tmp/checkpoints")
 connected_components_example_df = g_example.connectedComponents()
 display(connected_components_example_df)
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC <img src="https://github.com/maxkoehlerdatabricks/production_traceability/blob/main/pictures/Weakly_Connected_Components.png?raw=true" width=100%>
 
 # COMMAND ----------
 
@@ -139,7 +139,7 @@ subgraph_vertices_example_pdf = subgraph_vertices_example_df.toPandas()
   # There should be only one search id
   search_id = [node for node in ["C1", "C2"] if gnx.has_node(node)][0]
 
-  backwards_ego_graph = nx.ego_graph(gnx.reverse(), search_id, radius=100)
+  backwards_ego_graph = nx.ego_graph(gnx.reverse(), search_id, radius=100).reverse()
   backwards_ego_graph_edge_df = nx.to_pandas_edgelist(backwards_ego_graph)
 
   display(backwards_ego_graph_edge_df)
@@ -147,7 +147,7 @@ subgraph_vertices_example_pdf = subgraph_vertices_example_df.toPandas()
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC The rest of the solution is about parallelsing this using Pandas UDF, see https://www.databricks.com/blog/2017/10/30/introducing-vectorized-udfs-for-pyspark.html
+# MAGIC The rest of the solution is about parallelising this using Pandas UDF, see https://www.databricks.com/blog/2017/10/30/introducing-vectorized-udfs-for-pyspark.html
 
 # COMMAND ----------
 
@@ -290,7 +290,7 @@ def ego_graph_on_component(pdf: pd.DataFrame) -> pd.DataFrame:
   search_id = pdf["search_id_in_this_component"][0]
 
   # Create the egograph on the reversed graph to traverse the graph backwards
-  backwards_ego_graph = nx.ego_graph(gnx.reverse(), search_id, radius=100)
+  backwards_ego_graph = nx.ego_graph(gnx.reverse(), search_id, radius=100).reverse()
   backwards_ego_graph_edge_df = nx.to_pandas_edgelist(backwards_ego_graph)
 
   # Select the relevant columns and rows
