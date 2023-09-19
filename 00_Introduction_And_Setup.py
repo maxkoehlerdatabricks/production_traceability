@@ -162,15 +162,16 @@ display(production_process_df)
 
 # Create edges_df
 edge_df = (production_process_df.
-              withColumn("src", f.concat_ws('/',f.col("BC_Child"),f.col("SID_Child"), f.col("plant"))).
-              withColumn("dst", f.concat_ws('/',f.col("BC_Parent"),f.col("SID_Parent"), f.col("plant")))
+              withColumn("src", f.concat_ws('/',f.col("BC_Parent"),f.col("SID_Parent"), f.col("plant"))).
+              withColumn("dst", f.concat_ws('/',f.col("BC_Child"),f.col("SID_Child"), f.col("plant")))
+              
 )
 
 # Create vertices_df and collect vertices metadata
 vertices_df = (
-  edge_df.select(f.col("src").alias("id"), f.col("BC_Child").alias("BC"), f.col("SID_Child").alias("SID"), f.col("plant")).
+  edge_df.select(f.col("dst").alias("id"), f.col("BC_Child").alias("BC"), f.col("SID_Child").alias("SID"), f.col("plant")).
   union(
-    edge_df.select(f.col("dst").alias("id"), f.col("BC_Parent").alias("BC"), f.col("SID_Parent").alias("SID"), f.col("plant"))
+    edge_df.select(f.col("src").alias("id"), f.col("BC_Parent").alias("BC"), f.col("SID_Parent").alias("SID"), f.col("plant"))
     ).
   distinct()
 )

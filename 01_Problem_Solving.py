@@ -52,7 +52,7 @@ display(error_type1_df)
 # MAGIC - We would like to analyze the data measured at the station "Turning_Blank". However
 # MAGIC   - From the package id we do not know which plant the product comes from
 # MAGIC   - We do not know the barcodes of the product at the station "Turning_Blank"
-# MAGIC   - The measuremnt data is just an "endless" time seires and we do not know what part of the time seires to consider for which barcode
+# MAGIC   - The measuremnt data is just an "endless" time series and we do not know what part of the time seires to consider for which barcode
 # MAGIC - If our analyses reveils a deficiency in production that completely explains the issue, we can
 # MAGIC   - Gain trust bei explaining the issue to the customer
 # MAGIC   - Identify the effected barcodes
@@ -71,6 +71,15 @@ g = GraphFrame(vertices_df, edge_df)
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC It will be confortable in this notebook to create the reverted graph as well
+
+# COMMAND ----------
+
+g_reverted = GraphFrame(vertices_df, edge_df.withColumnRenamed("src", "dst_new").withColumnRenamed("dst", "src").withColumnRenamed("dst_new", "dst"))
+
+# COMMAND ----------
+
 # MAGIC %md 
 # MAGIC Our goal is to trace backwards from the customer (last node, station "At_Customer") to the station "Turning_Blank_Station".
 
@@ -82,7 +91,7 @@ g = GraphFrame(vertices_df, edge_df)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC The customer only provided the package id's. At the first glance, we do not know the effected plants. We do know that the first occurance of the package id is at the station 'Packaging_Logistics'. Let's search in the vertices for all possible nodes that relate to the given package id's.
+# MAGIC The customer only provided the package id's. At the first glance, we do not know the effected plants. We do know that the customer's package id's refer to barcodes at the station "At_Customer". Let's search in the vertices for all possible nodes that relate to the given package id's.
 
 # COMMAND ----------
 
@@ -102,12 +111,12 @@ display(start_search_nodes)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC Using Breadth First Search, we can for ian example path to go from "At_Customer" to "Turning_Blank_Station". 
+# MAGIC Using Breadth First Search, we can for ian example path to go from "At_Customer" to "Turning_Blank_Station". As we aim for traversing the graph backwards, we use the reverted graph to run forwards.
 
 # COMMAND ----------
 
 # Breadth firts search
-example_path = g.bfs(
+example_path = g_reverted.bfs(
   fromExpr = "id = '" + start_search_nodes.collect()[0][0] + "'",
   toExpr = "SID = 'Turning_Blank_Station'",
   maxPathLength = 10)
@@ -121,10 +130,16 @@ display(example_path)
 # COMMAND ----------
 
 cols = example_path.columns
-cols[0] = "from"
-cols[-1] = "to"
-cols.reverse()
 cols
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC cols = example_path.columns
+# MAGIC cols[0] = "from"
+# MAGIC cols[-1] = "to"
+# MAGIC cols.reverse()
+# MAGIC cols
 
 # COMMAND ----------
 
@@ -212,3 +227,7 @@ display(measurement_series_turning_rpm.groupBy("part_number").agg(f.max("rpm")))
 
 # MAGIC  %md
 # MAGIC  After conducting a physical simulation we can now prove that the slightly increased diameter of the end product is due to a slightly too slow turning process. We can identify all problematic parts that are shipped to the customer and explain the issue to the customer. This significantly reduces the number of affected products by the recall. Furthermore, implementing a preventive action is straightforward, since we only need to adapt respective thresholds in the inline measurement system.
+
+# COMMAND ----------
+
+
