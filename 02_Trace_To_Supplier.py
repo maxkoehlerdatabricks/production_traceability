@@ -12,8 +12,7 @@
 # MAGIC - Products were produced by the manufacturer and then shipped to the customer
 # MAGIC - The customer observed several broken products and reports on the broken products
 # MAGIC - Then manufacturer checks internal data and does not observe an abnormality
-# MAGIC - The manufacturer wants to 
-# MAGIC     - Trace back to the supplier to check if the erroneous parts can be assigned to one and the same supplier batch
+# MAGIC - The manufacturer wants to trace back to the supplier to check if the erroneous parts can be assigned to one and the same supplier batch
 # MAGIC
 # MAGIC **Motivation**: Significantly reduce the non conformance costs of the manufacturer
 # MAGIC
@@ -84,6 +83,11 @@ g_example = GraphFrame(vertices_example_df, edges_example_df)
 sc.setCheckpointDir("dbfs:/dbfs/tmp/checkpoints")
 connected_components_example_df = g_example.connectedComponents()
 display(connected_components_example_df)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC <img src="https://github.com/maxkoehlerdatabricks/production_traceability/blob/main/pictures/Weakly_Connected_Components.png?raw=true" width=100%>
 
 # COMMAND ----------
 
@@ -195,10 +199,6 @@ display(supplier_batch_df)
 edge_df = spark.read.table("edge_df")
 vertices_df = spark.read.table("vertices_df")
 g = GraphFrame(vertices_df, edge_df)
-
-# COMMAND ----------
-
-display(edge_df)
 
 # COMMAND ----------
 
