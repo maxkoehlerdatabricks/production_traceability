@@ -176,7 +176,7 @@ display(start_search_nodes)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC Using Breadth First Search, we can for ian example path to go from "At_Customer" to "Turning_Blank_Station". As we aim for traversing the graph backwards, we use the reverted graph to run forwards.
+# MAGIC Using Breadth First Search, we learn the paths from "At_Customer" to "Turning_Blank_Station". As we aim for traversing the graph backwards, we use the reverted graph to run forwards.
 
 # COMMAND ----------
 
@@ -277,7 +277,7 @@ display(suspicious_series.groupBy("ID_at_Customer").agg(f.max("rpm")))
 
 # COMMAND ----------
 
-display(measurement_series_turning_rpm.groupBy("part_number").agg(f.max("rpm")))
+display(measurement_series_turning_rpm.agg(f.max("rpm")))
 
 # COMMAND ----------
 
