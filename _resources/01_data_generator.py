@@ -118,7 +118,7 @@ display(sample_process_graph_df)
 
 # Draw the graph
 G = nx.from_pandas_edgelist(sample_process_graph_df.toPandas(), source='SID_Parent', target='SID_Child', edge_attr='Assembly_Type', create_using=nx.DiGraph())
-nx.draw_spring(G, with_labels= True, font_size = 7, font_color = "red", node_color = "lightgrey")
+#nx.draw_spring(G, with_labels= True, font_size = 7, font_color = "red", node_color = "lightgrey")
 
 # COMMAND ----------
 

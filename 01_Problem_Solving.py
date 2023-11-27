@@ -1,5 +1,10 @@
 # Databricks notebook source
 # MAGIC %md
+# MAGIC This notebook was created using an ML enabled cluster of runtime 14.1 on an Azure Databricks workspace which is Unity Catalog enabled
+
+# COMMAND ----------
+
+# MAGIC %md
 # MAGIC # Advanced Problem Solving with Traceability
 
 # COMMAND ----------
@@ -74,8 +79,8 @@ display(edges_example_df)
 
 # COMMAND ----------
 
-gnx_example = nx.from_pandas_edgelist(edges_example_df.toPandas(), source='src', target='dst', create_using=nx.DiGraph())
-nx.draw_spring(gnx_example, with_labels= True, font_size = 7, font_color = "red", node_color = "lightgrey")
+#gnx_example = nx.from_pandas_edgelist(edges_example_df.toPandas(), source='src', target='dst', create_using=nx.DiGraph())
+#nx.draw_spring(gnx_example, with_labels= True, font_size = 7, font_color = "red", node_color = "lightgrey")
 
 # COMMAND ----------
 
@@ -180,7 +185,7 @@ display(start_search_nodes)
 
 # COMMAND ----------
 
-# Breadth firts search
+# Breadth first search
 example_path = g_reverted.bfs(
   fromExpr = "id = '" + start_search_nodes.collect()[0][0] + "'",
   toExpr = "SID = 'Turning_Blank_Station'",

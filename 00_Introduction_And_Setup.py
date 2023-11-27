@@ -1,5 +1,10 @@
 # Databricks notebook source
 # MAGIC %md
+# MAGIC This notebook was created using an ML enabled cluser of runtime 14.1 on an Azure Databricks workspace which is Unity Catalog enabled
+
+# COMMAND ----------
+
+# MAGIC %md
 # MAGIC # Introduction
 # MAGIC
 # MAGIC In this example, we consider a simplified production process of a **gear shaft**.
@@ -74,8 +79,8 @@ display(sample_process_graph_df)
 
 # COMMAND ----------
 
-G = nx.from_pandas_edgelist(sample_process_graph_df.toPandas(), source='SID_Parent', target='SID_Child', edge_attr='Assembly_Type', create_using=nx.DiGraph())
-nx.draw_spring(G, with_labels= True, font_size = 7, font_color = "red", node_color = "lightgrey")
+#G = nx.from_pandas_edgelist(sample_process_graph_df.toPandas(), source='SID_Parent', target='SID_Child', edge_attr='Assembly_Type', create_using=nx.DiGraph())
+#nx.draw_spring(G, with_labels= True, font_size = 7, font_color = "red", node_color = "lightgrey")
 
 # COMMAND ----------
 
@@ -178,7 +183,7 @@ vertices_df = (
 
 # COMMAND ----------
 
-display(edge_df)
+display(edge_df.select("src","dst","Link_to_data","Start_Time", "End_Time"))
 
 # COMMAND ----------
 

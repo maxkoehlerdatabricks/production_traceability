@@ -1,5 +1,10 @@
 # Databricks notebook source
 # MAGIC %md
+# MAGIC This notebook was created using an ML enabled cluster of runtime 14.1 on an Azure Databricks workspace which is Unity Catalog enabled
+
+# COMMAND ----------
+
+# MAGIC %md
 # MAGIC # Delivery Tracking
 
 # COMMAND ----------
@@ -84,8 +89,8 @@ g_example = GraphFrame(vertices_example_df, edges_example_df)
 
 # COMMAND ----------
 
-gnx_example = nx.from_pandas_edgelist(edges_example_df.toPandas(), source='src', target='dst', create_using=nx.DiGraph())
-nx.draw_spring(gnx_example, with_labels= True, font_size = 7, font_color = "red", node_color = "lightgrey")
+#gnx_example = nx.from_pandas_edgelist(edges_example_df.toPandas(), source='src', target='dst', create_using=nx.DiGraph())
+#nx.draw_spring(gnx_example, with_labels= True, font_size = 7, font_color = "red", node_color = "lightgrey")
 
 # COMMAND ----------
 
